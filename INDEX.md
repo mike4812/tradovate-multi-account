@@ -1,4 +1,4 @@
-# 📚 מפת הפרויקט - Tradovate Multi-Account Manager
+# 📚 מפת הפרויקט - Tradovate Multi-Account Manager 
 
 מדריך מהיר לכל הקבצים בפרויקט ומה הם עושים.
 
