@@ -6,8 +6,6 @@
     <title>Argaman Capital - Automated Wealth</title>
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <!-- Chart.js Library -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <!-- Login Screen -->
@@ -50,7 +48,6 @@
                     </div>
                     <nav class="nav">
                         <a href="#dashboard" class="nav-link active">דשבורד</a>
-                        <a href="#charts" class="nav-link">גרפים</a>
                         <a href="#accounts" class="nav-link">חשבונות</a>
                         <a href="#positions" class="nav-link">פוזיציות</a>
                         <a href="#orders" class="nav-link">הזמנות</a>
@@ -147,21 +144,6 @@
                     </div>
                 </section>
 
-                <!-- Symbol Chart Section -->
-                <section class="chart-section">
-                    <h2 class="section-title">📊 גרף המדד הנוכחי</h2>
-                    <div class="chart-card chart-main">
-                        <div class="chart-header">
-                            <h3 class="chart-title" id="chartTitle">NQ - E-mini Nasdaq</h3>
-                            <div class="chart-info">
-                                <span class="chart-price" id="chartPrice">$18,500.00</span>
-                                <span class="chart-change positive" id="chartChange">+125.50 (+0.68%)</span>
-                            </div>
-                        </div>
-                        <canvas id="symbolChart"></canvas>
-                    </div>
-                </section>
-
             <!-- Dashboard Section -->
             <section id="dashboard" class="section active">
                 <h2 class="section-title">סקירה כללית</h2>
@@ -221,49 +203,6 @@
                             <span class="risk-label">סיכון גבוה</span>
                             <span class="risk-count" id="highRiskCount">0</span>
                         </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Charts Section -->
-            <section id="charts" class="section">
-                <h2 class="section-title">📊 גרפים וניתוח</h2>
-                
-                <div class="charts-grid">
-                    <!-- Account Balance Chart -->
-                    <div class="chart-card">
-                        <h3 class="chart-title">💰 יתרות חשבונות</h3>
-                        <canvas id="balanceChart"></canvas>
-                    </div>
-
-                    <!-- P&L Chart -->
-                    <div class="chart-card">
-                        <h3 class="chart-title">📈 רווח/הפסד</h3>
-                        <canvas id="pnlChart"></canvas>
-                    </div>
-
-                    <!-- Position Distribution -->
-                    <div class="chart-card">
-                        <h3 class="chart-title">📊 התפלגות פוזיציות</h3>
-                        <canvas id="positionChart"></canvas>
-                    </div>
-
-                    <!-- Risk Distribution -->
-                    <div class="chart-card">
-                        <h3 class="chart-title">⚠️ רמות סיכון</h3>
-                        <canvas id="riskChart"></canvas>
-                    </div>
-
-                    <!-- Performance Over Time -->
-                    <div class="chart-card chart-wide">
-                        <h3 class="chart-title">📉 ביצועים לאורך זמן (7 ימים)</h3>
-                        <canvas id="performanceChart"></canvas>
-                    </div>
-
-                    <!-- Trading Volume -->
-                    <div class="chart-card chart-wide">
-                        <h3 class="chart-title">📊 נפח מסחר יומי</h3>
-                        <canvas id="volumeChart"></canvas>
                     </div>
                 </div>
             </section>
