@@ -2,8 +2,10 @@
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-ISC-green.svg)
-![Node](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen.svg)
+![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
+![GitHub Actions](https://img.shields.io/github/actions/workflow/status/Mike4812/tradovate-multi-account/ci.yml?branch=main&label=build)
+![GitHub Pages](https://img.shields.io/badge/demo-live-success.svg)
 
 מערכת לניהול מספר חשבונות Tradovate במקביל. המערכת מאפשרת חיבור לכמה חשבונות Tradovate, קבלת מידע, ביצוע פעולות על חשבון ספציפי או על כל החשבונות בו-זמנית.
 
