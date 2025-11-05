@@ -1,0 +1,29 @@
+{
+  "name": "tradovate-multi-account",
+  "version": "1.0.0",
+  "description": "Multi-account Tradovate connection manager",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "advanced": "node src/advanced-examples.js",
+    "portfolio": "node src/portfolio-manager.js",
+    "portfolio:monitor": "node src/portfolio-manager.js monitor 30",
+    "portfolio:export": "node src/portfolio-manager.js export",
+    "web": "node src/server.js",
+    "dev": "node src/server.js"
+  },
+  "keywords": [
+    "tradovate",
+    "trading",
+    "multi-account",
+    "api"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2"
+  }
+}

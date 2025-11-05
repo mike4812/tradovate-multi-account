@@ -1,0 +1,24 @@
+{
+  "accounts": [
+    {
+      "name": "חשבון ראשי - Alexander",
+      "username": "AlexanderAshurov76",
+      "password": "L3666H3137M3428tv=",
+      "environment": "demo",
+      "cid": "",
+      "sec": ""
+    }
+  ],
+  "settings": {
+    "autoReconnect": true,
+    "reconnectDelay": 5000,
+    "maxReconnectAttempts": 3,
+    "defaultOrderType": "Market",
+    "riskManagement": {
+      "maxPositionSize": 10,
+      "maxDailyLoss": 1000,
+      "stopLossDefault": 50,
+      "takeProfitDefault": 100
+    }
+  }
+}

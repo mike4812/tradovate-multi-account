@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Argaman Capital - Automated Wealth</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-container">
+            <div class="login-logo">
+                <img src="img/logo.svg" alt="Argaman Capital" class="logo-image">
+                <h1 class="brand-name">ARGAMAN CAPITAL</h1>
+                <p class="brand-tagline">AUTOMATED WEALTH</p>
+            </div>
+            <form class="login-form" id="loginForm">
+                <h2 class="login-title">התחברות למערכת</h2>
+                <div class="form-group">
+                    <label for="username">שם משתמש</label>
+                    <input type="text" id="username" class="form-input" placeholder="הזן שם משתמש" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">סיסמה</label>
+                    <input type="password" id="password" class="form-input" placeholder="הזן סיסמה" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-large btn-block">
+                    🔐 התחבר
+                </button>
+                <p class="login-footer">
+                    מערכת מאובטחת לניהול מסחר אוטומטי
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App (hidden until login) -->
+    <div class="main-app" id="mainApp" style="display: none;">
+        <!-- Header -->
+        <header class="header">
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo">
+                        <img src="img/logo.svg" alt="Argaman Capital" style="width: 40px; height: 40px; margin-left: 10px;">
+                        <span>Argaman Capital</span>
+                    </div>
+                    <nav class="nav">
+                        <a href="#dashboard" class="nav-link active">דשבורד</a>
+                        <a href="#charts" class="nav-link">גרפים</a>
+                        <a href="#accounts" class="nav-link">חשבונות</a>
+                        <a href="#positions" class="nav-link">פוזיציות</a>
+                        <a href="#orders" class="nav-link">הזמנות</a>
+                        <a href="#settings" class="nav-link">הגדרות</a>
+                    </nav>
+                    <button class="btn btn-secondary btn-sm" id="logoutBtn">
+                        🚪 התנתק
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="container">
+                
+                <!-- Connection Status -->
+                <section class="connection-panel">
+                    <div class="status-badge" id="connectionStatus">
+                        <span class="status-indicator"></span>
+                        <span class="status-text">מנותק</span>
+                    </div>
+                    <button class="btn btn-primary" id="connectBtn">התחבר לכל החשבונות</button>
+                    <button class="btn btn-secondary" id="refreshBtn" disabled>רענן נתונים</button>
+                </section>
+
+                <!-- Master Trading Control Panel -->
+                <section class="master-control-panel">
+                    <h2 class="panel-title">🎯 בקרת מסחר ראשית - כל החשבונות</h2>
+                    
+                    <div class="control-grid">
+                        <!-- Symbol Selection -->
+                        <div class="control-group">
+                            <label class="control-label">📊 בחר מדד למסחר:</label>
+                            <select id="masterSymbol" class="control-select">
+                                <option value="NQ">NQ - E-mini Nasdaq</option>
+                                <option value="ES">ES - E-mini S&P 500</option>
+                                <option value="YM">YM - E-mini Dow</option>
+                                <option value="RTY">RTY - E-mini Russell</option>
+                                <option value="GC">GC - Gold Futures</option>
+                                <option value="CL">CL - Crude Oil</option>
+                                <option value="6E">6E - Euro FX</option>
+                            </select>
+                            <div class="current-symbol-display">
+                                מדד נוכחי: <strong id="currentSymbolDisplay">NQ</strong>
+                            </div>
+                        </div>
+
+                        <!-- Side Selection -->
+                        <div class="control-group">
+                            <label class="control-label">📈📉 כיוון מסחר:</label>
+                            <div class="side-buttons">
+                                <button id="masterLongBtn" class="btn-side btn-long active">
+                                    📈 LONG
+                                </button>
+                                <button id="masterShortBtn" class="btn-side btn-short">
+                                    📉 SHORT
+                                </button>
+                            </div>
+                            <div class="current-side-display">
+                                כיוון נוכחי: <strong id="currentSideDisplay">LONG</strong>
+                            </div>
+                        </div>
+
+                        <!-- Account Selection -->
+                        <div class="control-group">
+                            <label class="control-label">👤 בחר חשבון:</label>
+                            <select id="accountSelect" class="control-select">
+                                <option value="all">🌐 כל החשבונות</option>
+                            </select>
+                            <div class="current-symbol-display">
+                                נבחר: <strong id="selectedAccountDisplay">כל החשבונות</strong>
+                            </div>
+                        </div>
+
+                        <!-- Contracts Amount -->
+                        <div class="control-group">
+                            <label class="control-label">📊 מספר חוזים:</label>
+                            <input type="number" id="contractsAmount" class="control-select" min="1" value="1" style="text-align: center; font-size: 1.5rem; font-weight: 700;">
+                            <div class="current-symbol-display">
+                                חוזים: <strong id="contractsDisplay">1</strong>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="control-group control-actions">
+                            <button id="openPositionBtn" class="btn btn-success btn-large">
+                                🚀 פתח פוזיציה חדשה
+                            </button>
+                            <button id="closeAllPositionsBtn" class="btn btn-danger btn-large">
+                                ⛔ סגור את כל הפוזיציות
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Symbol Chart Section -->
+                <section class="chart-section">
+                    <h2 class="section-title">📊 גרף המדד הנוכחי</h2>
+                    <div class="chart-card chart-main">
+                        <div class="chart-header">
+                            <h3 class="chart-title" id="chartTitle">NQ - E-mini Nasdaq</h3>
+                            <div class="chart-info">
+                                <span class="chart-price" id="chartPrice">$18,500.00</span>
+                                <span class="chart-change positive" id="chartChange">+125.50 (+0.68%)</span>
+                            </div>
+                        </div>
+                        <canvas id="symbolChart"></canvas>
+                    </div>
+                </section>
+
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section active">
+                <h2 class="section-title">סקירה כללית</h2>
+                
+                <!-- Summary Cards -->
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="card-icon">💰</div>
+                        <div class="card-content">
+                            <h3 class="card-title">יתרה כוללת</h3>
+                            <div class="card-value" id="totalBalance">$0.00</div>
+                            <div class="card-subtitle">בכל החשבונות</div>
+                        </div>
+                    </div>
+
+                    <div class="summary-card">
+                        <div class="card-icon">👥</div>
+                        <div class="card-content">
+                            <h3 class="card-title">חשבונות מחוברים</h3>
+                            <div class="card-value" id="connectedAccounts">0</div>
+                            <div class="card-subtitle">מתוך <span id="totalAccounts">0</span></div>
+                        </div>
+                    </div>
+
+                    <div class="summary-card">
+                        <div class="card-icon">📈</div>
+                        <div class="card-content">
+                            <h3 class="card-title">פוזיציות פתוחות</h3>
+                            <div class="card-value" id="totalPositions">0</div>
+                            <div class="card-subtitle">בכל החשבונות</div>
+                        </div>
+                    </div>
+
+                    <div class="summary-card">
+                        <div class="card-icon">📋</div>
+                        <div class="card-content">
+                            <h3 class="card-title">הזמנות פעילות</h3>
+                            <div class="card-value" id="totalOrders">0</div>
+                            <div class="card-subtitle">ממתינות לביצוע</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Analysis -->
+                <div class="risk-panel">
+                    <h3 class="panel-title">ניתוח סיכונים</h3>
+                    <div class="risk-grid">
+                        <div class="risk-item risk-low">
+                            <span class="risk-label">סיכון נמוך</span>
+                            <span class="risk-count" id="lowRiskCount">0</span>
+                        </div>
+                        <div class="risk-item risk-medium">
+                            <span class="risk-label">סיכון בינוני</span>
+                            <span class="risk-count" id="mediumRiskCount">0</span>
+                        </div>
+                        <div class="risk-item risk-high">
+                            <span class="risk-label">סיכון גבוה</span>
+                            <span class="risk-count" id="highRiskCount">0</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Charts Section -->
+            <section id="charts" class="section">
+                <h2 class="section-title">📊 גרפים וניתוח</h2>
+                
+                <div class="charts-grid">
+                    <!-- Account Balance Chart -->
+                    <div class="chart-card">
+                        <h3 class="chart-title">💰 יתרות חשבונות</h3>
+                        <canvas id="balanceChart"></canvas>
+                    </div>
+
+                    <!-- P&L Chart -->
+                    <div class="chart-card">
+                        <h3 class="chart-title">📈 רווח/הפסד</h3>
+                        <canvas id="pnlChart"></canvas>
+                    </div>
+
+                    <!-- Position Distribution -->
+                    <div class="chart-card">
+                        <h3 class="chart-title">📊 התפלגות פוזיציות</h3>
+                        <canvas id="positionChart"></canvas>
+                    </div>
+
+                    <!-- Risk Distribution -->
+                    <div class="chart-card">
+                        <h3 class="chart-title">⚠️ רמות סיכון</h3>
+                        <canvas id="riskChart"></canvas>
+                    </div>
+
+                    <!-- Performance Over Time -->
+                    <div class="chart-card chart-wide">
+                        <h3 class="chart-title">📉 ביצועים לאורך זמן (7 ימים)</h3>
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+
+                    <!-- Trading Volume -->
+                    <div class="chart-card chart-wide">
+                        <h3 class="chart-title">📊 נפח מסחר יומי</h3>
+                        <canvas id="volumeChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Accounts Section -->
+            <section id="accounts" class="section">
+                <h2 class="section-title">רשימת חשבונות</h2>
+                <div id="accountsList" class="accounts-grid">
+                    <!-- Accounts will be populated here -->
+                    <div class="empty-state">
+                        <div class="empty-icon">🔌</div>
+                        <p>התחבר כדי לראות את החשבונות</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Positions Section -->
+            <section id="positions" class="section">
+                <h2 class="section-title">פוזיציות פתוחות</h2>
+                
+                <!-- Trade Panel -->
+                <div class="trade-panel">
+                    <h3 class="panel-title">📈 פתיחת פוזיציה חדשה</h3>
+                    <form id="tradeForm" class="trade-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>סוג פוזיציה</label>
+                                <div class="button-group">
+                                    <button type="button" class="btn-option btn-long active" data-side="long">
+                                        📈 LONG
+                                    </button>
+                                    <button type="button" class="btn-option btn-short" data-side="short">
+                                        📉 SHORT
+                                    </button>
+                                </div>
+                                <input type="hidden" id="tradeSide" value="long">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="tradeInstrument">נייר ערך</label>
+                                <select id="tradeInstrument" class="form-input" required>
+                                    <option value="ES">ES - E-mini S&P 500</option>
+                                    <option value="NQ">NQ - E-mini Nasdaq</option>
+                                    <option value="YM">YM - E-mini Dow</option>
+                                    <option value="RTY">RTY - E-mini Russell</option>
+                                    <option value="GC">GC - Gold Futures</option>
+                                    <option value="CL">CL - Crude Oil</option>
+                                    <option value="6E">6E - Euro FX</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="tradeContracts">מספר חוזים</label>
+                                <input type="number" id="tradeContracts" class="form-input" min="1" value="1" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="entryPrice">מחיר כניסה (אופציונלי)</label>
+                                <input type="number" id="entryPrice" class="form-input" step="0.01" placeholder="Market Order">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="stopLoss">Stop Loss</label>
+                                <input type="number" id="stopLoss" class="form-input" step="0.01" placeholder="לדוגמה: 4500">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="takeProfit">Take Profit</label>
+                                <input type="number" id="takeProfit" class="form-input" step="0.01" placeholder="לדוגמה: 4600">
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary btn-large">
+                                🚀 פתח פוזיציה
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('tradeForm').reset()">
+                                🔄 נקה טופס
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="positionsList" class="data-table-container">
+                    <div class="empty-state">
+                        <div class="empty-icon">📊</div>
+                        <p>אין פוזיציות פתוחות</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Orders Section -->
+            <section id="orders" class="section">
+                <h2 class="section-title">הזמנות פעילות</h2>
+                <div id="ordersList" class="data-table-container">
+                    <div class="empty-state">
+                        <div class="empty-icon">📋</div>
+                        <p>אין הזמנות פעילות</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="section">
+                <h2 class="section-title">הגדרות</h2>
+                <div class="settings-panel">
+                    <div class="setting-item">
+                        <label class="setting-label">
+                            <input type="checkbox" id="autoRefresh">
+                            <span>רענון אוטומטי</span>
+                        </label>
+                        <p class="setting-description">רענן את הנתונים כל 30 שניות</p>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">
+                            <input type="checkbox" id="soundAlerts">
+                            <span>התראות קוליות</span>
+                        </label>
+                        <p class="setting-description">השמע צליל כאשר יש שינוי בחשבון</p>
+                    </div>
+
+                    <div class="setting-item">
+                        <label class="setting-label">סביבה:</label>
+                        <select id="environmentSelect" class="setting-select">
+                            <option value="demo" selected>Demo</option>
+                            <option value="live">Live</option>
+                        </select>
+                        <p class="setting-description">⚠️ זהירות! Live mode משפיע על חשבונות אמיתיים</p>
+                    </div>
+
+                    <div class="setting-item">
+                        <button class="btn btn-danger" id="disconnectBtn" disabled>התנתק מכל החשבונות</button>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <p>&copy; 2025 Argaman Capital - Automated Wealth | Made with ❤️</p>
+            </div>
+        </footer>
+        
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+            <p>מתחבר לחשבונות...</p>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div id="toastContainer" class="toast-container"></div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
