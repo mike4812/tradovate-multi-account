@@ -1,4 +1,8 @@
 {
+  "webAuth": {
+    "username": "YOUR_WEB_USERNAME",
+    "password": "YOUR_WEB_PASSWORD"
+  },
   "accounts": [
     {
       "accountName": "Account1",

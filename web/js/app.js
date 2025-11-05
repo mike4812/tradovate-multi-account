@@ -831,15 +831,35 @@ function initLogin() {
                     throw new Error('Invalid credentials');
                 }
             } catch (error) {
-                // Demo mode - allow any credentials
-                console.log('Backend not available, using demo login');
-                if (username && password) {
-                    sessionStorage.setItem('argaman_logged_in', 'true');
-                    sessionStorage.setItem('argaman_username', username);
-                    showMainApp();
-                    showToast('🎉 התחברת בהצלחה! (Demo Mode)', 'success');
-                } else {
-                    showToast('❌ שם משתמש וסיסמה נדרשים', 'error');
+                // Try to load config.json for authentication
+                try {
+                    const configResponse = await fetch('../config.json');
+                    if (configResponse.ok) {
+                        const config = await configResponse.json();
+                        if (config.webAuth && 
+                            username === config.webAuth.username && 
+                            password === config.webAuth.password) {
+                            sessionStorage.setItem('argaman_logged_in', 'true');
+                            sessionStorage.setItem('argaman_username', username);
+                            showMainApp();
+                            showToast('🎉 התחברת בהצלחה!', 'success');
+                        } else {
+                            showToast('❌ שם משתמש או סיסמה שגויים', 'error');
+                        }
+                    } else {
+                        throw new Error('Config not found');
+                    }
+                } catch (configError) {
+                    // Fallback - Demo mode (allow any credentials)
+                    console.log('Config not available, using demo login');
+                    if (username && password) {
+                        sessionStorage.setItem('argaman_logged_in', 'true');
+                        sessionStorage.setItem('argaman_username', username);
+                        showMainApp();
+                        showToast('🎉 התחברת בהצלחה! (Demo Mode)', 'success');
+                    } else {
+                        showToast('❌ שם משתמש וסיסמה נדרשים', 'error');
+                    }
                 }
             } finally {
                 showLoading(false);

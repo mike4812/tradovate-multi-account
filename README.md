@@ -56,6 +56,10 @@ cp config.example.json config.json
 3. **ערוך את `config.json` והזן את פרטי החשבונות שלך:**
 ```json
 {
+  "webAuth": {
+    "username": "admin",
+    "password": "your-secure-password"
+  },
   "accounts": [
     {
       "accountName": "Account1",
@@ -74,6 +78,10 @@ cp config.example.json config.json
   }
 }
 ```
+
+   **שדה `webAuth`**: משמש לאימות בממשק האינטרנט (`web/index.html`)
+   - `username`: שם המשתמש להתחברות לממשק
+   - `password`: הסיסמה להתחברות לממשק
 
 ## שימוש
 
