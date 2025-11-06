@@ -6,6 +6,7 @@
     <title>Argaman Capital - Automated Wealth</title>
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <!-- Login Screen -->
@@ -222,6 +223,35 @@
             <!-- Positions Section -->
             <section id="positions" class="section">
                 <h2 class="section-title">פוזיציות פתוחות</h2>
+                
+                <!-- Market Charts with Orders -->
+                <div class="charts-panel">
+                    <h3 class="panel-title">📊 גרפים עם הזמנות ופוזיציות</h3>
+                    <div class="chart-controls">
+                        <select id="chartSymbol" class="control-select">
+                            <option value="NQ">NQ - Nasdaq</option>
+                            <option value="ES">ES - S&P 500</option>
+                            <option value="GC">GC - Gold</option>
+                        </select>
+                        <select id="chartInterval" class="control-select">
+                            <option value="1">1 דקה</option>
+                            <option value="5" selected>5 דקות</option>
+                            <option value="15">15 דקות</option>
+                            <option value="60">60 דקות</option>
+                        </select>
+                        <button id="startChartBtn" class="btn btn-primary">📡 התחל סטרימינג</button>
+                        <button id="stopChartBtn" class="btn btn-secondary" disabled>⏹️ עצור</button>
+                    </div>
+                    <div class="chart-container" style="position: relative; height: 400px; margin-top: 20px;">
+                        <canvas id="priceChart"></canvas>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item"><span class="legend-color" style="background: #2196F3;"></span> מחיר</div>
+                        <div class="legend-item"><span class="legend-color" style="background: #4CAF50;"></span> פוזיציות LONG</div>
+                        <div class="legend-item"><span class="legend-color" style="background: #F44336;"></span> פוזיציות SHORT</div>
+                        <div class="legend-item"><span class="legend-color" style="background: #FF9800;"></span> הזמנות ממתינות</div>
+                    </div>
+                </div>
                 
                 <!-- Trade Panel -->
                 <div class="trade-panel">

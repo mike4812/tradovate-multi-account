@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import MultiAccountManager from './MultiAccountManager.js';
+import TradovateMarketData from './TradovateMarketData.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +17,7 @@ app.use(express.static(path.join(__dirname, '../web')));
 
 // Global manager instance
 let manager = null;
+let marketDataClient = null;
 
 // Load config
 function loadConfig() {
@@ -196,6 +198,161 @@ app.post('/api/trade/close', async (req, res) => {
         });
     }
 });
+
+// API endpoint to get positions
+app.get('/api/positions', async (req, res) => {
+    try {
+        if (!manager) {
+            return res.json({
+                positions: [],
+                orders: []
+            });
+        }
+        
+        const summary = await manager.getAllAccountsSummary();
+        
+        res.json({
+            positions: summary.positions || [],
+            orders: summary.orders || []
+        });
+        
+    } catch (error) {
+        console.error('Get positions error:', error);
+        res.json({
+            positions: [],
+            orders: []
+        });
+    }
+});
+
+// API endpoint to get chart data
+app.get('/api/chart/:symbol', async (req, res) => {
+    try {
+        const { symbol } = req.params;
+        const interval = parseInt(req.query.interval) || 5;
+        const bars = parseInt(req.query.bars) || 50;
+        
+        if (!marketDataClient) {
+            // Initialize market data client if not exists
+            const config = loadConfig();
+            if (config && config.accounts && config.accounts.length > 0) {
+                marketDataClient = new TradovateMarketData(
+                    config.accounts[0],
+                    config.settings?.isDemo !== false
+                );
+                await marketDataClient.authenticate();
+            } else {
+                // Return demo data
+                return res.json({
+                    bars: generateDemoBars(symbol, interval, bars)
+                });
+            }
+        }
+        
+        const chartData = await marketDataClient.getChartData(symbol, interval, bars);
+        
+        if (chartData && chartData.bars) {
+            res.json({
+                bars: chartData.bars,
+                contract: chartData.contract
+            });
+        } else {
+            res.json({
+                bars: generateDemoBars(symbol, interval, bars)
+            });
+        }
+        
+    } catch (error) {
+        console.error('Chart data error:', error);
+        res.json({
+            bars: generateDemoBars(req.params.symbol, 5, 50)
+        });
+    }
+});
+
+// API endpoint to get real-time quote
+app.get('/api/quote/:symbol', async (req, res) => {
+    try {
+        const { symbol } = req.params;
+        
+        if (!marketDataClient) {
+            const config = loadConfig();
+            if (config && config.accounts && config.accounts.length > 0) {
+                marketDataClient = new TradovateMarketData(
+                    config.accounts[0],
+                    config.settings?.isDemo !== false
+                );
+                await marketDataClient.authenticate();
+            } else {
+                return res.json(generateDemoQuote(symbol));
+            }
+        }
+        
+        // Get contract info
+        const contract = await marketDataClient.getContract(symbol);
+        
+        if (!contract) {
+            return res.json(generateDemoQuote(symbol));
+        }
+        
+        // In a real implementation, this would fetch live quote
+        // For now, return demo data
+        res.json(generateDemoQuote(symbol));
+        
+    } catch (error) {
+        console.error('Quote error:', error);
+        res.json(generateDemoQuote(req.params.symbol));
+    }
+});
+
+// Helper function to generate demo bars
+function generateDemoBars(symbol, interval, count) {
+    const bars = [];
+    const basePrice = symbol === 'NQ' ? 16000 : symbol === 'ES' ? 4500 : 2000;
+    let currentPrice = basePrice;
+    
+    for (let i = 0; i < count; i++) {
+        const timestamp = new Date(Date.now() - (count - i) * interval * 60000);
+        const change = (Math.random() - 0.5) * 20;
+        currentPrice += change;
+        
+        const open = currentPrice + (Math.random() - 0.5) * 5;
+        const close = currentPrice + (Math.random() - 0.5) * 5;
+        const high = Math.max(open, close) + Math.random() * 5;
+        const low = Math.min(open, close) - Math.random() * 5;
+        
+        bars.push({
+            timestamp: timestamp.toISOString(),
+            open: parseFloat(open.toFixed(2)),
+            high: parseFloat(high.toFixed(2)),
+            low: parseFloat(low.toFixed(2)),
+            close: parseFloat(close.toFixed(2)),
+            volume: Math.floor(Math.random() * 1000)
+        });
+    }
+    
+    return bars;
+}
+
+// Helper function to generate demo quote
+function generateDemoQuote(symbol) {
+    const basePrice = symbol === 'NQ' ? 16000 : symbol === 'ES' ? 4500 : 2000;
+    const last = basePrice + (Math.random() - 0.5) * 100;
+    
+    return {
+        symbol: symbol,
+        timestamp: new Date().toISOString(),
+        bid: parseFloat((last - Math.random() * 2).toFixed(2)),
+        ask: parseFloat((last + Math.random() * 2).toFixed(2)),
+        last: parseFloat(last.toFixed(2)),
+        bidSize: Math.floor(Math.random() * 50) + 1,
+        askSize: Math.floor(Math.random() * 50) + 1,
+        volume: Math.floor(Math.random() * 10000),
+        high: parseFloat((last + Math.random() * 20).toFixed(2)),
+        low: parseFloat((last - Math.random() * 20).toFixed(2)),
+        open: parseFloat((last + (Math.random() - 0.5) * 10).toFixed(2))
+    };
+}
 
 // Catch all route - serve index.html
 app.get('*', (req, res) => {

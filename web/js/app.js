@@ -9,7 +9,16 @@ const state = {
     // Trading control
     currentSymbol: 'NQ',  // המדד הנוכחי
     currentSide: 'long',  // Long/Short
-    symbolChart: null     // גרף המדד
+    symbolChart: null,    // גרף המדד
+    // Chart state
+    chartData: {
+        labels: [],
+        prices: [],
+        volumes: []
+    },
+    chartInstance: null,
+    chartStreaming: false,
+    chartInterval: null
 };
 
 // DOM Elements
@@ -1051,9 +1060,11 @@ document.addEventListener('DOMContentLoaded', () => {
     updateUI();
     initTradeForm();
     initMasterControl();
+    initPriceChart();
     console.log('🚀 Argaman Capital - Automated Wealth');
     console.log('📝 Note: This is a demo UI. Connect to real backend for actual data.');
     console.log('🎯 Master Control Panel initialized');
+    console.log('📊 Price Charts initialized');
     console.log('🎯 Trading functions available:');
     console.log('   - closePosition(index)');
     console.log('   - closeAllPositions("long"|"short"|"all")');
@@ -1061,3 +1072,345 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('   - cancelAllOrders()');
     console.log('   - placeOrder(action, symbol, quantity, price)');
 });
+
+// ============================================
+// PRICE CHART WITH ORDERS & POSITIONS
+// ============================================
+
+function initPriceChart() {
+    const ctx = document.getElementById('priceChart');
+    if (!ctx) return;
+
+    const startBtn = document.getElementById('startChartBtn');
+    const stopBtn = document.getElementById('stopChartBtn');
+    const chartSymbol = document.getElementById('chartSymbol');
+    const chartInterval = document.getElementById('chartInterval');
+
+    // Initialize Chart.js
+    state.chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: 'מחיר',
+                    data: [],
+                    borderColor: '#2196F3',
+                    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.1,
+                    yAxisID: 'y'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'מחיר'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'זמן'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    enabled: true,
+                    callbacks: {
+                        afterBody: function(context) {
+                            return getOrdersAtPrice(context[0].parsed.y);
+                        }
+                    }
+                },
+                annotation: {
+                    annotations: {}
+                }
+            }
+        }
+    });
+
+    // Start streaming button
+    if (startBtn) {
+        startBtn.addEventListener('click', async () => {
+            const symbol = chartSymbol.value;
+            const interval = parseInt(chartInterval.value);
+            
+            await startChartStreaming(symbol, interval);
+            
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            showToast(`סטרימינג החל עבור ${symbol}`, 'success');
+        });
+    }
+
+    // Stop streaming button
+    if (stopBtn) {
+        stopBtn.addEventListener('click', () => {
+            stopChartStreaming();
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            showToast('סטרימינג הופסק', 'info');
+        });
+    }
+
+    console.log('📊 Price chart initialized');
+}
+
+async function startChartStreaming(symbol, interval) {
+    if (state.chartStreaming) {
+        stopChartStreaming();
+    }
+
+    state.chartStreaming = true;
+
+    try {
+        // Fetch initial historical data
+        const response = await fetch(`/api/chart/${symbol}?interval=${interval}&bars=50`);
+        
+        if (response.ok) {
+            const data = await response.json();
+            updateChartData(data.bars);
+        } else {
+            // Use demo data if backend not available
+            generateDemoChartData(symbol);
+        }
+
+        // Update chart every interval with new data
+        state.chartInterval = setInterval(async () => {
+            try {
+                const response = await fetch(`/api/quote/${symbol}`);
+                if (response.ok) {
+                    const quote = await response.json();
+                    addNewPriceToChart(quote);
+                }
+            } catch (error) {
+                // Generate demo updates
+                updateDemoChartData();
+            }
+
+            // Update orders and positions overlays
+            await updateChartOverlays();
+        }, interval * 1000);
+
+    } catch (error) {
+        console.error('Failed to start chart streaming:', error);
+        generateDemoChartData(symbol);
+    }
+}
+
+function stopChartStreaming() {
+    state.chartStreaming = false;
+    if (state.chartInterval) {
+        clearInterval(state.chartInterval);
+        state.chartInterval = null;
+    }
+}
+
+function updateChartData(bars) {
+    if (!bars || !state.chartInstance) return;
+
+    state.chartData.labels = bars.map(bar => {
+        const date = new Date(bar.timestamp);
+        return date.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+    });
+
+    state.chartData.prices = bars.map(bar => bar.close);
+    state.chartData.volumes = bars.map(bar => bar.volume);
+
+    state.chartInstance.data.labels = state.chartData.labels;
+    state.chartInstance.data.datasets[0].data = state.chartData.prices;
+    state.chartInstance.update('none');
+}
+
+function addNewPriceToChart(quote) {
+    if (!state.chartInstance) return;
+
+    const time = new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+    
+    state.chartData.labels.push(time);
+    state.chartData.prices.push(quote.last);
+
+    // Keep only last 50 data points
+    if (state.chartData.labels.length > 50) {
+        state.chartData.labels.shift();
+        state.chartData.prices.shift();
+    }
+
+    state.chartInstance.data.labels = state.chartData.labels;
+    state.chartInstance.data.datasets[0].data = state.chartData.prices;
+    state.chartInstance.update('none');
+}
+
+async function updateChartOverlays() {
+    if (!state.chartInstance) return;
+
+    try {
+        // Fetch current positions and orders
+        const response = await fetch('/api/positions');
+        const data = await response.json();
+
+        // Clear existing annotations
+        if (state.chartInstance.options.plugins.annotation) {
+            state.chartInstance.options.plugins.annotation.annotations = {};
+        }
+
+        // Add position lines
+        if (data.positions) {
+            data.positions.forEach((pos, idx) => {
+                const color = pos.netPos > 0 ? '#4CAF50' : '#F44336';
+                const label = pos.netPos > 0 ? `LONG ${Math.abs(pos.netPos)}` : `SHORT ${Math.abs(pos.netPos)}`;
+                
+                addChartAnnotation(`pos_${idx}`, pos.avgPrice, color, label, 'solid');
+            });
+        }
+
+        // Add order lines
+        if (data.orders) {
+            data.orders.forEach((order, idx) => {
+                if (order.price) {
+                    const color = '#FF9800';
+                    const label = `${order.action} @ ${order.price}`;
+                    
+                    addChartAnnotation(`order_${idx}`, order.price, color, label, 'dashed');
+                }
+            });
+        }
+
+        state.chartInstance.update('none');
+
+    } catch (error) {
+        // Use state data if API fails
+        updateChartOverlaysFromState();
+    }
+}
+
+function updateChartOverlaysFromState() {
+    if (!state.chartInstance) return;
+
+    // Clear annotations
+    if (state.chartInstance.options.plugins.annotation) {
+        state.chartInstance.options.plugins.annotation.annotations = {};
+    }
+
+    // Add positions from state
+    state.positions.forEach((pos, idx) => {
+        const color = pos.side === 'LONG' ? '#4CAF50' : '#F44336';
+        const label = `${pos.side} ${pos.contracts}`;
+        
+        addChartAnnotation(`pos_${idx}`, pos.entryPrice, color, label, 'solid');
+    });
+
+    // Add orders from state
+    state.orders.forEach((order, idx) => {
+        if (order.price) {
+            const color = '#FF9800';
+            const label = `${order.action} @ ${order.price}`;
+            
+            addChartAnnotation(`order_${idx}`, order.price, color, label, 'dashed');
+        }
+    });
+
+    state.chartInstance.update('none');
+}
+
+function addChartAnnotation(id, yValue, color, label, borderDash = 'solid') {
+    if (!state.chartInstance || !state.chartInstance.options.plugins.annotation) return;
+
+    state.chartInstance.options.plugins.annotation.annotations[id] = {
+        type: 'line',
+        yMin: yValue,
+        yMax: yValue,
+        borderColor: color,
+        borderWidth: 2,
+        borderDash: borderDash === 'dashed' ? [5, 5] : [],
+        label: {
+            display: true,
+            content: label,
+            enabled: true,
+            position: 'start',
+            backgroundColor: color,
+            color: '#fff',
+            font: {
+                size: 10,
+                weight: 'bold'
+            }
+        }
+    };
+}
+
+function getOrdersAtPrice(price) {
+    const orders = state.orders.filter(o => Math.abs(o.price - price) < 1);
+    const positions = state.positions.filter(p => Math.abs(p.entryPrice - price) < 1);
+    
+    let text = [];
+    
+    if (positions.length > 0) {
+        text.push('פוזיציות:');
+        positions.forEach(p => {
+            text.push(`${p.side} ${p.contracts} @ ${p.entryPrice}`);
+        });
+    }
+    
+    if (orders.length > 0) {
+        text.push('הזמנות:');
+        orders.forEach(o => {
+            text.push(`${o.action} ${o.quantity} @ ${o.price}`);
+        });
+    }
+    
+    return text.join('\n');
+}
+
+// Demo chart data generator
+function generateDemoChartData(symbol) {
+    const bars = [];
+    const startPrice = symbol === 'NQ' ? 16000 : symbol === 'ES' ? 4500 : 2000;
+    let currentPrice = startPrice;
+
+    for (let i = 0; i < 50; i++) {
+        const change = (Math.random() - 0.5) * 20;
+        currentPrice += change;
+        
+        bars.push({
+            timestamp: new Date(Date.now() - (50 - i) * 60000).toISOString(),
+            open: currentPrice - Math.random() * 10,
+            high: currentPrice + Math.random() * 10,
+            low: currentPrice - Math.random() * 10,
+            close: currentPrice,
+            volume: Math.floor(Math.random() * 1000)
+        });
+    }
+
+    updateChartData(bars);
+    updateChartOverlaysFromState();
+}
+
+function updateDemoChartData() {
+    if (!state.chartData.prices.length) return;
+
+    const lastPrice = state.chartData.prices[state.chartData.prices.length - 1];
+    const change = (Math.random() - 0.5) * 10;
+    const newPrice = lastPrice + change;
+
+    addNewPriceToChart({ last: newPrice });
+    updateChartOverlaysFromState();
+}
